@@ -4,7 +4,7 @@ using namespace std;
 
 #define QUEUE_SIZE 2
 #define JOB_SIZE 2
-#define BOOST_TIME 10
+#define BOOST_TIME 5
 
 typedef struct Queues {
   int timeSlice;
@@ -63,6 +63,19 @@ void initJobs(int currentTime) {
     }
   }
 }
+void boostJobs() {
+  for (int n = 0; n < QUEUE_SIZE - 1; n++) {
+    while (!q[n].jobs.empty()) {
+      int i = q[n].jobs.front();
+
+      q[QUEUE_SIZE - 1].jobs.push(i);
+      j[i].currentQ = QUEUE_SIZE - 1;
+      j[i].allotLeft = q[QUEUE_SIZE - 1].timeAllotment;
+      j[i].ticksLeft = q[QUEUE_SIZE - 1].timeSlice;
+      q[n].jobs.pop();
+    }
+  }
+}
 int main() {
 
   int finishedJobs = 0;
@@ -72,8 +85,12 @@ int main() {
 
   while (finishedJobs < JOB_SIZE) {
     initJobs(currentTime);
-    int jobIndex = findJob(currentTime);
+    if (BOOST_TIME != 0 && currentTime % BOOST_TIME == 0) {
+      printf("[ time %2d ] BOOST ( every %d )\n", currentTime, BOOST_TIME);
+      boostJobs();
+    }
 
+    int jobIndex = findJob(currentTime);
     if (jobIndex == -1) {
       printf("[ time %2d ] IDLE\n", currentTime);
       currentTime += 1;
